@@ -4,6 +4,7 @@ import com.bancoxyz.batch.config.BatchDataConfig.TransaccionInput;
 import com.bancoxyz.batch.config.BatchDataConfig.TransaccionProcesada;
 import com.bancoxyz.batch.listener.BatchJobListener;
 import com.bancoxyz.batch.processor.TransaccionProcessor;
+import com.bancoxyz.batch.tasklet.ResumenAnomaliasTasklet;
 import com.bancoxyz.batch.writer.TransaccionWriter;
 
 import org.springframework.batch.core.job.Job;
@@ -26,6 +27,7 @@ public class TransaccionesJobConfig {
     private final TransaccionProcessor transaccionProcessor;
     private final TransaccionWriter transaccionWriter;
     private final BatchJobListener batchJobListener;
+    private final ResumenAnomaliasTasklet resumenAnomaliasTasklet;
 
     public TransaccionesJobConfig(
             JobRepository jobRepository,
@@ -33,7 +35,8 @@ public class TransaccionesJobConfig {
             FlatFileItemReader<TransaccionInput> transaccionesReader,
             TransaccionProcessor transaccionProcessor,
             TransaccionWriter transaccionWriter,
-            BatchJobListener batchJobListener) {
+            BatchJobListener batchJobListener,
+            ResumenAnomaliasTasklet resumenAnomaliasTasklet) {
 
         this.jobRepository = jobRepository;
         this.transactionManager = transactionManager;
@@ -41,6 +44,7 @@ public class TransaccionesJobConfig {
         this.transaccionProcessor = transaccionProcessor;
         this.transaccionWriter = transaccionWriter;
         this.batchJobListener = batchJobListener;
+        this.resumenAnomaliasTasklet = resumenAnomaliasTasklet;
     }
 
     @Bean
@@ -52,6 +56,7 @@ public class TransaccionesJobConfig {
         )
                 .listener(batchJobListener)
                 .start(transaccionesStep())
+                .next(resumenAnomaliasStep())
                 .build();
     }
 
@@ -70,6 +75,20 @@ public class TransaccionesJobConfig {
                 .faultTolerant()
                 .skip(Exception.class)
                 .skipLimit(20)
+                .build();
+    }
+
+    @Bean
+    public Step resumenAnomaliasStep() {
+
+        return new StepBuilder(
+                "resumenAnomaliasStep",
+                jobRepository
+        )
+                .tasklet(
+                        resumenAnomaliasTasklet,
+                        transactionManager
+                )
                 .build();
     }
 }

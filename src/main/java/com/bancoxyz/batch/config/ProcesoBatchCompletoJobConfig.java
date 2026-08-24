@@ -20,12 +20,14 @@ public class ProcesoBatchCompletoJobConfig {
     public Job procesoBatchCompleto(
             Step transaccionesStep,
             Step interesesStep,
-            Step estadosAnualesStep) {
+            Step estadosAnualesStep,
+            Step resumenAnomaliasStep) {
 
         return new JobBuilder("procesoBatchCompleto", jobRepository)
                 .start(transaccionesStep)
                 .next(interesesStep)
                 .next(estadosAnualesStep)
+                .next(resumenAnomaliasStep)
                 .build();
     }
 }
