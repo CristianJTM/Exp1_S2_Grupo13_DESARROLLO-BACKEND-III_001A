@@ -13,8 +13,10 @@ import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.infrastructure.item.file.FlatFileItemReader;
 import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.batch.infrastructure.item.support.SynchronizedItemStreamReader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
 
 @Configuration
@@ -28,6 +30,7 @@ public class TransaccionesJobConfig {
     private final TransaccionWriter transaccionWriter;
     private final BatchJobListener batchJobListener;
     private final ResumenAnomaliasTasklet resumenAnomaliasTasklet;
+    private final ThreadPoolTaskExecutor batchTaskExecutor;
 
     public TransaccionesJobConfig(
             JobRepository jobRepository,
@@ -36,7 +39,8 @@ public class TransaccionesJobConfig {
             TransaccionProcessor transaccionProcessor,
             TransaccionWriter transaccionWriter,
             BatchJobListener batchJobListener,
-            ResumenAnomaliasTasklet resumenAnomaliasTasklet) {
+            ResumenAnomaliasTasklet resumenAnomaliasTasklet,
+            ThreadPoolTaskExecutor batchTaskExecutor) {
 
         this.jobRepository = jobRepository;
         this.transactionManager = transactionManager;
@@ -45,6 +49,7 @@ public class TransaccionesJobConfig {
         this.transaccionWriter = transaccionWriter;
         this.batchJobListener = batchJobListener;
         this.resumenAnomaliasTasklet = resumenAnomaliasTasklet;
+        this.batchTaskExecutor = batchTaskExecutor;
     }
 
     @Bean
@@ -56,7 +61,6 @@ public class TransaccionesJobConfig {
         )
                 .listener(batchJobListener)
                 .start(transaccionesStep())
-                .next(resumenAnomaliasStep())
                 .build();
     }
 
@@ -72,9 +76,17 @@ public class TransaccionesJobConfig {
                 .reader(transaccionesReader)
                 .processor(transaccionProcessor)
                 .writer(transaccionWriter)
+
+                // Procesamiento paralelo con 3 hilos
+                .taskExecutor(batchTaskExecutor)
+
+                // Tolerancia a fallos
                 .faultTolerant()
+                .retry(Exception.class)
+                .retryLimit(3)
                 .skip(Exception.class)
                 .skipLimit(20)
+
                 .build();
     }
 
