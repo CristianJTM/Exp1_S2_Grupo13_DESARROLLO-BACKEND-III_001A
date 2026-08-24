@@ -18,6 +18,16 @@ public class CuentaAnualProcessor
             CuentaAnualInput item) {
 
         // ========================================================
+        // INFORMACIÓN DEL HILO DE EJECUCIÓN
+        // ========================================================
+
+        System.out.println(
+                "CUENTA ANUAL " + item.cuentaId()
+                        + " -> Hilo: "
+                        + Thread.currentThread().getName()
+        );
+
+        // ========================================================
         // VALIDACIÓN DE CUENTA
         // ========================================================
 

@@ -19,6 +19,16 @@ public class TransaccionProcessor
         StringBuilder observacion = new StringBuilder();
 
         // ========================================================
+        // INFORMACIÓN DEL HILO DE EJECUCIÓN
+        // ========================================================
+
+        System.out.println(
+                "TRANSACCIÓN " + item.id()
+                        + " -> Hilo: "
+                        + Thread.currentThread().getName()
+        );
+
+        // ========================================================
         // VALIDACIÓN DEL MONTO
         // ========================================================
 

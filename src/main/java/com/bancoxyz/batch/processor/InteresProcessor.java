@@ -26,6 +26,16 @@ public class InteresProcessor
     public InteresProcesado process(InteresInput item) {
 
         // ========================================================
+        // INFORMACIÓN DEL HILO DE EJECUCIÓN
+        // ========================================================
+
+        System.out.println(
+                "CUENTA " + item.cuentaId()
+                        + " -> Hilo: "
+                        + Thread.currentThread().getName()
+        );
+
+        // ========================================================
         // VALIDACIÓN DEL SALDO
         // ========================================================
 
