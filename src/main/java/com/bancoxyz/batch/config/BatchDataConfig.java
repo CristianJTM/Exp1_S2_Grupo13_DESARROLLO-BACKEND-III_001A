@@ -3,6 +3,8 @@ package com.bancoxyz.batch.config;
 
 import org.springframework.batch.infrastructure.item.file.FlatFileItemReader;
 import org.springframework.batch.infrastructure.item.file.builder.FlatFileItemReaderBuilder;
+import org.springframework.batch.infrastructure.item.support.SynchronizedItemStreamReader;
+import org.springframework.batch.infrastructure.item.support.builder.SynchronizedItemStreamReaderBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.FileSystemResource;
@@ -106,14 +108,14 @@ public class BatchDataConfig {
 
 
     // ============================================================
-    // READER: TRANSACCIONES
+    // READER BASE: TRANSACCIONES
     // ============================================================
 
     @Bean
-    public FlatFileItemReader<TransaccionInput> transaccionesReader() {
+    public FlatFileItemReader<TransaccionInput> transaccionesReaderBase() {
 
         return new FlatFileItemReaderBuilder<TransaccionInput>()
-                .name("transaccionesReader")
+                .name("transaccionesReaderBase")
                 .resource(
                         new FileSystemResource(
                                 DATA_PATH + "transacciones.csv"
@@ -142,8 +144,6 @@ public class BatchDataConfig {
                                     fechaTexto
                             );
                         } catch (Exception ignored) {
-                            // La fecha inválida será manejada
-                            // posteriormente por el procesamiento.
                         }
                     }
 
@@ -160,7 +160,6 @@ public class BatchDataConfig {
                                     montoTexto
                             );
                         } catch (Exception ignored) {
-                            // El monto inválido queda como null.
                         }
                     }
 
@@ -176,14 +175,28 @@ public class BatchDataConfig {
 
 
     // ============================================================
-    // READER: INTERESES
+    // READER SEGURO: TRANSACCIONES
     // ============================================================
 
     @Bean
-    public FlatFileItemReader<InteresInput> interesesReader() {
+    public SynchronizedItemStreamReader<TransaccionInput> transaccionesReader(
+            FlatFileItemReader<TransaccionInput> transaccionesReaderBase) {
+
+        return new SynchronizedItemStreamReaderBuilder<TransaccionInput>()
+                .delegate(transaccionesReaderBase)
+                .build();
+    }
+
+
+    // ============================================================
+    // READER BASE: INTERESES
+    // ============================================================
+
+    @Bean
+    public FlatFileItemReader<InteresInput> interesesReaderBase() {
 
         return new FlatFileItemReaderBuilder<InteresInput>()
-                .name("interesesReader")
+                .name("interesesReaderBase")
                 .resource(
                         new FileSystemResource(
                                 DATA_PATH + "intereses.csv"
@@ -213,7 +226,6 @@ public class BatchDataConfig {
                                     saldoTexto
                             );
                         } catch (Exception ignored) {
-                            // Saldo inválido queda como null.
                         }
                     }
 
@@ -230,7 +242,6 @@ public class BatchDataConfig {
                                     edadTexto
                             );
                         } catch (Exception ignored) {
-                            // Edad inválida queda como null.
                         }
                     }
 
@@ -247,14 +258,28 @@ public class BatchDataConfig {
 
 
     // ============================================================
-    // READER: CUENTAS ANUALES
+    // READER SEGURO: INTERESES
     // ============================================================
 
     @Bean
-    public FlatFileItemReader<CuentaAnualInput> cuentasAnualesReader() {
+    public SynchronizedItemStreamReader<InteresInput> interesesReader(
+            FlatFileItemReader<InteresInput> interesesReaderBase) {
+
+        return new SynchronizedItemStreamReaderBuilder<InteresInput>()
+                .delegate(interesesReaderBase)
+                .build();
+    }
+
+
+    // ============================================================
+    // READER BASE: CUENTAS ANUALES
+    // ============================================================
+
+    @Bean
+    public FlatFileItemReader<CuentaAnualInput> cuentasAnualesReaderBase() {
 
         return new FlatFileItemReaderBuilder<CuentaAnualInput>()
-                .name("cuentasAnualesReader")
+                .name("cuentasAnualesReaderBase")
                 .resource(
                         new FileSystemResource(
                                 DATA_PATH + "cuentas_anuales.csv"
@@ -284,7 +309,6 @@ public class BatchDataConfig {
                                     fechaTexto
                             );
                         } catch (Exception ignored) {
-                            // Fecha inválida queda como null.
                         }
                     }
 
@@ -301,7 +325,6 @@ public class BatchDataConfig {
                                     montoTexto
                             );
                         } catch (Exception ignored) {
-                            // Monto inválido queda como null.
                         }
                     }
 
@@ -313,6 +336,20 @@ public class BatchDataConfig {
                             fieldSet.readString("descripcion")
                     );
                 })
+                .build();
+    }
+
+
+    // ============================================================
+    // READER SEGURO: CUENTAS ANUALES
+    // ============================================================
+
+    @Bean
+    public SynchronizedItemStreamReader<CuentaAnualInput> cuentasAnualesReader(
+            FlatFileItemReader<CuentaAnualInput> cuentasAnualesReaderBase) {
+
+        return new SynchronizedItemStreamReaderBuilder<CuentaAnualInput>()
+                .delegate(cuentasAnualesReaderBase)
                 .build();
     }
 }
