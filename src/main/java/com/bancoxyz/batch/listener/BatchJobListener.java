@@ -2,13 +2,20 @@ package com.bancoxyz.batch.listener;
 
 import java.time.LocalDateTime;
 
-
 import org.springframework.batch.core.job.JobExecution;
 import org.springframework.batch.core.listener.JobExecutionListener;
+import org.springframework.boot.SpringApplication;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 @Component
 public class BatchJobListener implements JobExecutionListener {
+
+    private final ApplicationContext applicationContext;
+
+    public BatchJobListener(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
+    }
 
     @Override
     public void beforeJob(JobExecution jobExecution) {
@@ -18,9 +25,20 @@ public class BatchJobListener implements JobExecutionListener {
         System.out.println("INICIO DE JOB");
         System.out.println("==================================================");
 
-        System.out.println("Job: " + jobExecution.getJobInstance().getJobName());
-        System.out.println("Execution ID: " + jobExecution.getId());
-        System.out.println("Inicio: " + LocalDateTime.now());
+        System.out.println(
+                "Job: "
+                        + jobExecution.getJobInstance().getJobName()
+        );
+
+        System.out.println(
+                "Execution ID: "
+                        + jobExecution.getId()
+        );
+
+        System.out.println(
+                "Inicio: "
+                        + LocalDateTime.now()
+        );
 
         System.out.println("==================================================");
         System.out.println();
@@ -86,5 +104,21 @@ public class BatchJobListener implements JobExecutionListener {
 
         System.out.println("==================================================");
         System.out.println();
+
+        // ========================================================
+        // CIERRE AUTOMÁTICO DE LA APLICACIÓN
+        // ========================================================
+
+        if (jobExecution.getStatus().isRunning() == false) {
+
+            int exitCode = SpringApplication.exit(
+                    applicationContext,
+                    () -> jobExecution.getStatus().isUnsuccessful()
+                            ? 1
+                            : 0
+            );
+
+            System.exit(exitCode);
+        }
     }
 }
