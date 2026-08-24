@@ -9,6 +9,9 @@ import org.springframework.batch.infrastructure.item.Chunk;
 import org.springframework.batch.infrastructure.item.ItemWriter;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+import java.util.List;
+
 @Component
 public class CuentaAnualWriter
         implements ItemWriter<CuentaAnualProcesada> {
@@ -28,36 +31,110 @@ public class CuentaAnualWriter
 
         for (CuentaAnualProcesada item : chunk.getItems()) {
 
-            CuentaAnual cuentaAnual =
-                    new CuentaAnual();
+            /*
+             * Busca si ya existe un estado consolidado
+             * para la misma cuenta y año.
+             */
+            List<CuentaAnual> existentes =
+                    estadoCuentaRepository.findByCuentaIdAndAnio(
+                            item.cuentaId(),
+                            item.anio()
+                    );
 
-            cuentaAnual.setCuentaId(
-                    item.cuentaId()
-            );
+            CuentaAnual cuentaAnual;
 
-            cuentaAnual.setAnio(
-                    item.anio()
-            );
+            if (!existentes.isEmpty()) {
 
-            cuentaAnual.setTotalDepositos(
-                    item.totalDepositos()
-            );
+                /*
+                 * Ya existe un registro para la cuenta y año.
+                 * Se actualiza acumulando los valores.
+                 */
+                cuentaAnual = existentes.get(0);
 
-            cuentaAnual.setTotalRetiros(
-                    item.totalRetiros()
-            );
+                BigDecimal totalDepositos =
+                        cuentaAnual.getTotalDepositos() != null
+                                ? cuentaAnual.getTotalDepositos()
+                                : BigDecimal.ZERO;
 
-            cuentaAnual.setSaldoMovimiento(
-                    item.saldoMovimiento()
-            );
+                BigDecimal totalRetiros =
+                        cuentaAnual.getTotalRetiros() != null
+                                ? cuentaAnual.getTotalRetiros()
+                                : BigDecimal.ZERO;
 
-            cuentaAnual.setCantidadOperaciones(
-                    item.cantidadOperaciones()
-            );
+                BigDecimal saldoMovimiento =
+                        cuentaAnual.getSaldoMovimiento() != null
+                                ? cuentaAnual.getSaldoMovimiento()
+                                : BigDecimal.ZERO;
 
-            cuentaAnual.setObservacion(
-                    item.observacion()
-            );
+                Integer cantidadOperaciones =
+                        cuentaAnual.getCantidadOperaciones() != null
+                                ? cuentaAnual.getCantidadOperaciones()
+                                : 0;
+
+                cuentaAnual.setTotalDepositos(
+                        totalDepositos.add(
+                                item.totalDepositos()
+                        )
+                );
+
+                cuentaAnual.setTotalRetiros(
+                        totalRetiros.add(
+                                item.totalRetiros()
+                        )
+                );
+
+                cuentaAnual.setSaldoMovimiento(
+                        saldoMovimiento.add(
+                                item.saldoMovimiento()
+                        )
+                );
+
+                cuentaAnual.setCantidadOperaciones(
+                        cantidadOperaciones
+                                + item.cantidadOperaciones()
+                );
+
+                cuentaAnual.setObservacion(
+                        "Estado de cuenta anual consolidado"
+                );
+
+            } else {
+
+                /*
+                 * No existe un registro para la cuenta y año,
+                 * por lo tanto se crea el primer registro.
+                 */
+                cuentaAnual =
+                        new CuentaAnual();
+
+                cuentaAnual.setCuentaId(
+                        item.cuentaId()
+                );
+
+                cuentaAnual.setAnio(
+                        item.anio()
+                );
+
+                cuentaAnual.setTotalDepositos(
+                        item.totalDepositos()
+                );
+
+                cuentaAnual.setTotalRetiros(
+                        item.totalRetiros()
+                );
+
+                cuentaAnual.setSaldoMovimiento(
+                        item.saldoMovimiento()
+                );
+
+                cuentaAnual.setCantidadOperaciones(
+                        item.cantidadOperaciones()
+                );
+
+                cuentaAnual.setObservacion(
+                        "Estado de cuenta anual consolidado"
+                );
+            }
 
             estadoCuentaRepository.save(
                     cuentaAnual

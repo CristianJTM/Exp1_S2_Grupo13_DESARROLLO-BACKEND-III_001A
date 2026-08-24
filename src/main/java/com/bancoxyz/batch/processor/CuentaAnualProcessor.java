@@ -41,8 +41,6 @@ public class CuentaAnualProcessor
             return null;
         }
 
-        // Los montos iguales a cero no representan
-        // un movimiento financiero válido.
         if (item.monto().compareTo(BigDecimal.ZERO) == 0) {
             return null;
         }
@@ -77,34 +75,37 @@ public class CuentaAnualProcessor
         }
 
         // ========================================================
+        // INICIALIZACIÓN DE TOTALES
+        // ========================================================
+
+        BigDecimal totalDepositos = BigDecimal.ZERO;
+        BigDecimal totalRetiros = BigDecimal.ZERO;
+
+        // ========================================================
         // CLASIFICACIÓN DEL MOVIMIENTO
         // ========================================================
 
-        BigDecimal totalDepositos =
-                BigDecimal.ZERO;
+        if ("deposito".equals(tipo)) {
 
-        BigDecimal totalRetiros =
-                BigDecimal.ZERO;
+            if (item.monto().compareTo(BigDecimal.ZERO) > 0) {
 
-        if ("deposito".equals(tipo) &&
-                item.monto().compareTo(BigDecimal.ZERO) > 0) {
+                totalDepositos = item.monto();
+            }
 
-            totalDepositos = item.monto();
-        }
+        } else if ("retiro".equals(tipo) ||
+                "compra".equals(tipo)) {
 
-        if (("retiro".equals(tipo) ||
-                "compra".equals(tipo)) &&
-                item.monto().compareTo(BigDecimal.ZERO) < 0) {
+            if (item.monto().compareTo(BigDecimal.ZERO) < 0) {
 
-            totalRetiros = item.monto().abs();
+                totalRetiros = item.monto().abs();
+            }
         }
 
         // ========================================================
         // SALDO DEL MOVIMIENTO
         // ========================================================
 
-        BigDecimal saldoMovimiento =
-                item.monto();
+        BigDecimal saldoMovimiento = item.monto();
 
         // ========================================================
         // RESULTADO

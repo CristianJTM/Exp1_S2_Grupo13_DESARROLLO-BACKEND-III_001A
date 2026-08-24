@@ -2,6 +2,7 @@ package com.bancoxyz.batch.repository;
 import com.bancoxyz.batch.model.Transaccion;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -21,4 +22,7 @@ public interface TransaccionRepository
             LocalDate fechaInicio,
             LocalDate fechaFin
     );
+
+    @Query("SELECT DISTINCT t.fecha FROM Transaccion t ORDER BY t.fecha")
+    List<LocalDate> findFechasProcesadas();
 }
