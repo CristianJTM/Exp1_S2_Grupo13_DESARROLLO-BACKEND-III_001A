@@ -1,5 +1,6 @@
 package com.bancoxyz.batch.config;
 
+import com.bancoxyz.batch.listener.BatchJobListener;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
@@ -11,9 +12,14 @@ import org.springframework.context.annotation.Configuration;
 public class ProcesoBatchCompletoJobConfig {
 
     private final JobRepository jobRepository;
+    private final BatchJobListener batchJobListener;
 
-    public ProcesoBatchCompletoJobConfig(JobRepository jobRepository) {
+    public ProcesoBatchCompletoJobConfig(
+            JobRepository jobRepository,
+            BatchJobListener batchJobListener) {
+
         this.jobRepository = jobRepository;
+        this.batchJobListener = batchJobListener;
     }
 
     @Bean
@@ -23,7 +29,11 @@ public class ProcesoBatchCompletoJobConfig {
             Step estadosAnualesStep,
             Step resumenAnomaliasStep) {
 
-        return new JobBuilder("procesoBatchCompleto", jobRepository)
+        return new JobBuilder(
+                "procesoBatchCompleto",
+                jobRepository
+        )
+                .listener(batchJobListener)
                 .start(transaccionesStep)
                 .next(interesesStep)
                 .next(estadosAnualesStep)
