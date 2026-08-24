@@ -12,8 +12,10 @@ import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.infrastructure.item.file.FlatFileItemReader;
+import org.springframework.batch.infrastructure.item.support.SynchronizedItemStreamReader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
 
 @Configuration
@@ -26,6 +28,7 @@ public class InteresesJobConfig {
     private final InteresProcessor interesProcessor;
     private final InteresWriter interesWriter;
     private final BatchJobListener batchJobListener;
+    private final ThreadPoolTaskExecutor batchTaskExecutor;
 
     public InteresesJobConfig(
             JobRepository jobRepository,
@@ -33,7 +36,8 @@ public class InteresesJobConfig {
             FlatFileItemReader<InteresInput> interesesReader,
             InteresProcessor interesProcessor,
             InteresWriter interesWriter,
-            BatchJobListener batchJobListener) {
+            BatchJobListener batchJobListener,
+            ThreadPoolTaskExecutor batchTaskExecutor) {
 
         this.jobRepository = jobRepository;
         this.transactionManager = transactionManager;
@@ -41,6 +45,7 @@ public class InteresesJobConfig {
         this.interesProcessor = interesProcessor;
         this.interesWriter = interesWriter;
         this.batchJobListener = batchJobListener;
+        this.batchTaskExecutor = batchTaskExecutor;
     }
 
     @Bean
@@ -67,9 +72,17 @@ public class InteresesJobConfig {
                 .reader(interesesReader)
                 .processor(interesProcessor)
                 .writer(interesWriter)
+
+                // Procesamiento paralelo con 3 hilos
+                .taskExecutor(batchTaskExecutor)
+
+                // Tolerancia a fallos
                 .faultTolerant()
+                .retry(Exception.class)
+                .retryLimit(3)
                 .skip(Exception.class)
                 .skipLimit(20)
+
                 .build();
     }
 }
