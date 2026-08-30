@@ -1,6 +1,5 @@
 package com.bancoxyz.batch.config;
 
-
 import org.springframework.batch.infrastructure.item.file.FlatFileItemReader;
 import org.springframework.batch.infrastructure.item.file.builder.FlatFileItemReaderBuilder;
 import org.springframework.batch.infrastructure.item.support.SynchronizedItemStreamReader;
@@ -15,7 +14,7 @@ import java.time.LocalDate;
 @Configuration
 public class BatchDataConfig {
 
-    private static final String DATA_PATH = "data/semana_1/";
+    private static final String DATA_PATH = "data/semana_2/";
 
 
     // ============================================================
@@ -140,10 +139,10 @@ public class BatchDataConfig {
                             !fechaTexto.isBlank()) {
 
                         try {
-                            fecha = LocalDate.parse(
-                                    fechaTexto
-                            );
+                            fecha = LocalDate.parse(fechaTexto);
                         } catch (Exception ignored) {
+                            // La fecha inválida queda como null
+                            // para ser manejada posteriormente.
                         }
                     }
 
@@ -156,10 +155,9 @@ public class BatchDataConfig {
                             !montoTexto.isBlank()) {
 
                         try {
-                            monto = new BigDecimal(
-                                    montoTexto
-                            );
+                            monto = new BigDecimal(montoTexto);
                         } catch (Exception ignored) {
+                            // El monto inválido queda como null.
                         }
                     }
 
@@ -222,10 +220,9 @@ public class BatchDataConfig {
                             !saldoTexto.isBlank()) {
 
                         try {
-                            saldo = new BigDecimal(
-                                    saldoTexto
-                            );
+                            saldo = new BigDecimal(saldoTexto);
                         } catch (Exception ignored) {
+                            // El saldo inválido queda como null.
                         }
                     }
 
@@ -238,10 +235,9 @@ public class BatchDataConfig {
                             !edadTexto.isBlank()) {
 
                         try {
-                            edad = Integer.valueOf(
-                                    edadTexto
-                            );
+                            edad = Integer.valueOf(edadTexto);
                         } catch (Exception ignored) {
+                            // La edad inválida queda como null.
                         }
                     }
 
@@ -305,10 +301,9 @@ public class BatchDataConfig {
                             !fechaTexto.isBlank()) {
 
                         try {
-                            fecha = LocalDate.parse(
-                                    fechaTexto
-                            );
+                            fecha = LocalDate.parse(fechaTexto);
                         } catch (Exception ignored) {
+                            // La fecha inválida queda como null.
                         }
                     }
 
@@ -321,10 +316,9 @@ public class BatchDataConfig {
                             !montoTexto.isBlank()) {
 
                         try {
-                            monto = new BigDecimal(
-                                    montoTexto
-                            );
+                            monto = new BigDecimal(montoTexto);
                         } catch (Exception ignored) {
+                            // El monto inválido queda como null.
                         }
                     }
 
