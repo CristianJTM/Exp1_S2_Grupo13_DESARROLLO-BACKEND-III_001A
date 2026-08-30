@@ -15,9 +15,6 @@ public class TransaccionProcessor
     @Override
     public TransaccionProcesada process(TransaccionInput item) {
 
-        boolean anomalia = false;
-        StringBuilder observacion = new StringBuilder();
-
         // ========================================================
         // INFORMACIÓN DEL HILO DE EJECUCIÓN
         // ========================================================
@@ -28,6 +25,29 @@ public class TransaccionProcessor
                         + Thread.currentThread().getName()
         );
 
+        boolean anomalia = false;
+        StringBuilder observacion = new StringBuilder();
+
+        // ========================================================
+        // VALIDACIÓN DE FECHA
+        // ========================================================
+
+        /*
+         * La fecha es obligatoria para almacenar la transacción.
+         * Si no existe, el registro se descarta para evitar que
+         * llegue al Writer y provoque una excepción de integridad
+         * en la base de datos.
+         */
+        if (item.fecha() == null) {
+
+            System.out.println(
+                    "TRANSACCIÓN " + item.id()
+                            + " -> Registro omitido: fecha inexistente."
+            );
+
+            return null;
+        }
+
         // ========================================================
         // VALIDACIÓN DEL MONTO
         // ========================================================
@@ -35,11 +55,15 @@ public class TransaccionProcessor
         if (item.monto() == null) {
 
             anomalia = true;
-            observacion.append("Monto inexistente. ");
+
+            observacion.append(
+                    "Monto inexistente. "
+            );
 
         } else if (item.monto().compareTo(BigDecimal.ZERO) <= 0) {
 
             anomalia = true;
+
             observacion.append(
                     "Monto inválido: debe ser mayor que cero. "
             );
@@ -54,20 +78,9 @@ public class TransaccionProcessor
                         !"credito".equalsIgnoreCase(item.tipo()))) {
 
             anomalia = true;
+
             observacion.append(
                     "Tipo de transacción inválido. "
-            );
-        }
-
-        // ========================================================
-        // VALIDACIÓN DE FECHA
-        // ========================================================
-
-        if (item.fecha() == null) {
-
-            anomalia = true;
-            observacion.append(
-                    "Fecha inválida o inexistente. "
             );
         }
 
