@@ -11,11 +11,12 @@ import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
-import org.springframework.batch.infrastructure.item.file.FlatFileItemReader;
 import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.batch.infrastructure.item.file.FlatFileParseException;
 import org.springframework.batch.infrastructure.item.support.SynchronizedItemStreamReader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.dao.DataAccessException;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
 
@@ -25,7 +26,7 @@ public class TransaccionesJobConfig {
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
 
-    private final FlatFileItemReader<TransaccionInput> transaccionesReader;
+    private final SynchronizedItemStreamReader<TransaccionInput> transaccionesReader;
     private final TransaccionProcessor transaccionProcessor;
     private final TransaccionWriter transaccionWriter;
     private final BatchJobListener batchJobListener;
@@ -35,7 +36,7 @@ public class TransaccionesJobConfig {
     public TransaccionesJobConfig(
             JobRepository jobRepository,
             PlatformTransactionManager transactionManager,
-            FlatFileItemReader<TransaccionInput> transaccionesReader,
+            SynchronizedItemStreamReader<TransaccionInput> transaccionesReader,
             TransaccionProcessor transaccionProcessor,
             TransaccionWriter transaccionWriter,
             BatchJobListener batchJobListener,
@@ -60,7 +61,13 @@ public class TransaccionesJobConfig {
                 jobRepository
         )
                 .listener(batchJobListener)
+
+                // 1. Procesamiento de transacciones
                 .start(transaccionesStep())
+
+                // 2. Generación del resumen de anomalías
+                .next(resumenAnomaliasStep())
+
                 .build();
     }
 
@@ -72,19 +79,35 @@ public class TransaccionesJobConfig {
                 jobRepository
         )
                 .<TransaccionInput, TransaccionProcesada>chunk(5)
+
                 .transactionManager(transactionManager)
+
+                // Reader protegido para procesamiento concurrente
                 .reader(transaccionesReader)
+
+                // Validación y transformación de datos
                 .processor(transaccionProcessor)
+
+                // Persistencia de resultados
                 .writer(transaccionWriter)
 
                 // Procesamiento paralelo con 3 hilos
                 .taskExecutor(batchTaskExecutor)
 
-                // Tolerancia a fallos
                 .faultTolerant()
-                .retry(Exception.class)
+
+                /*
+                 * Los errores de acceso a datos pueden ser transitorios,
+                 * por lo que se permite realizar hasta 3 reintentos.
+                 */
+                .retry(DataAccessException.class)
                 .retryLimit(3)
-                .skip(Exception.class)
+                /*
+                 * Los errores de formato o estructura del CSV se
+                 * consideran registros que pueden omitirse para
+                 * permitir la continuidad del procesamiento.
+                 */
+                .skip(FlatFileParseException.class)
                 .skipLimit(20)
 
                 .build();
