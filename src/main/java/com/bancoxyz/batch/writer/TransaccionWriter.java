@@ -33,7 +33,6 @@ public class TransaccionWriter
             transaccion.setFecha(item.fecha());
             transaccion.setMonto(item.monto());
             transaccion.setTipo(item.tipo());
-            transaccion.setAnomalia(item.anomalía());
             transaccion.setObservacion(item.observacion());
 
             transaccionRepository.save(transaccion);
