@@ -1,7 +1,9 @@
 package com.bancoxyz.batch.tasklet;
 
+import com.bancoxyz.batch.model.AnomaliaTransaccion;
 import com.bancoxyz.batch.model.ResumenTransacciones;
 import com.bancoxyz.batch.model.Transaccion;
+import com.bancoxyz.batch.repository.AnomaliaTransaccionRepository;
 import com.bancoxyz.batch.repository.ResumenTransaccionesRepository;
 import com.bancoxyz.batch.repository.TransaccionRepository;
 
@@ -20,13 +22,17 @@ import java.util.stream.Collectors;
 public class ResumenAnomaliasTasklet implements Tasklet {
 
     private final TransaccionRepository transaccionRepository;
+    private final AnomaliaTransaccionRepository anomaliaTransaccionRepository;
     private final ResumenTransaccionesRepository resumenTransaccionesRepository;
 
     public ResumenAnomaliasTasklet(
             TransaccionRepository transaccionRepository,
+            AnomaliaTransaccionRepository anomaliaTransaccionRepository,
             ResumenTransaccionesRepository resumenTransaccionesRepository) {
 
         this.transaccionRepository = transaccionRepository;
+        this.anomaliaTransaccionRepository =
+                anomaliaTransaccionRepository;
         this.resumenTransaccionesRepository =
                 resumenTransaccionesRepository;
     }
@@ -37,26 +43,31 @@ public class ResumenAnomaliasTasklet implements Tasklet {
             ChunkContext chunkContext) {
 
         // ========================================================
-        // OBTENER TRANSACCIONES PROCESADAS
+        // OBTENER TRANSACCIONES VÁLIDAS
         // ========================================================
 
-        List<Transaccion> transacciones =
+        List<Transaccion> transaccionesValidas =
                 transaccionRepository.findAll();
+
+        // ========================================================
+        // OBTENER TRANSACCIONES CON ANOMALÍAS
+        // ========================================================
+
+        List<AnomaliaTransaccion> transaccionesAnomalas =
+                anomaliaTransaccionRepository.findAll();
 
         // ========================================================
         // CONTADORES GENERALES
         // ========================================================
 
+        int totalValidas =
+                transaccionesValidas.size();
+
+        int totalAnomalias =
+                transaccionesAnomalas.size();
+
         int totalTransacciones =
-                transacciones.size();
-
-        long totalAnomalias =
-                transacciones.stream()
-                        .filter(Transaccion::isAnomalia)
-                        .count();
-
-        long totalValidas =
-                totalTransacciones - totalAnomalias;
+                totalValidas + totalAnomalias;
 
         // ========================================================
         // PORCENTAJE DE ANOMALÍAS
@@ -76,17 +87,16 @@ public class ResumenAnomaliasTasklet implements Tasklet {
         // ========================================================
 
         Map<String, Long> resumenAnomalias =
-                transacciones.stream()
-                        .filter(Transaccion::isAnomalia)
+                transaccionesAnomalas.stream()
                         .collect(
                                 Collectors.groupingBy(
-                                        Transaccion::getObservacion,
+                                        AnomaliaTransaccion::getDescripcion,
                                         Collectors.counting()
                                 )
                         );
 
         // ========================================================
-        // GUARDAR RESUMEN EN LA BASE DE DATOS
+        // GENERAR OBSERVACIÓN DEL RESUMEN
         // ========================================================
 
         String observacion;
@@ -111,13 +121,17 @@ public class ResumenAnomaliasTasklet implements Tasklet {
                             );
         }
 
+        // ========================================================
+        // GUARDAR RESUMEN EN LA BASE DE DATOS
+        // ========================================================
+
         ResumenTransacciones resumen =
                 new ResumenTransacciones(
                         LocalDate.now(),
                         observacion,
                         totalTransacciones,
-                        (int) totalAnomalias,
-                        (int) totalValidas
+                        totalAnomalias,
+                        totalValidas
                 );
 
         resumenTransaccionesRepository.save(resumen);
@@ -171,11 +185,11 @@ public class ResumenAnomaliasTasklet implements Tasklet {
         } else {
 
             resumenAnomalias.forEach(
-                    (observacionAnomalia, cantidad) -> {
+                    (descripcion, cantidad) -> {
 
                         System.out.println(
                                 "- "
-                                        + observacionAnomalia
+                                        + descripcion
                                         + " -> "
                                         + cantidad
                         );
