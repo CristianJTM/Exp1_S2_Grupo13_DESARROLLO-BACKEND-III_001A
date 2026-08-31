@@ -103,7 +103,7 @@ public class InteresesJobConfig {
                  */
                 .skip(DatoInvalidoException.class)
 
-                .skipLimit(20)
+                .skipLimit(650)
 
                 .build();
     }
