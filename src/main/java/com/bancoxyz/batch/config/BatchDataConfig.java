@@ -10,6 +10,9 @@ import org.springframework.core.io.FileSystemResource;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.List;
 
 @Configuration
 public class BatchDataConfig {
@@ -39,10 +42,8 @@ public class BatchDataConfig {
             LocalDate fecha,
             BigDecimal monto,
             String tipo,
-            boolean anomalía,
             String observacion
-    ) {
-    }
+    ) {}
 
 
     // ============================================================
@@ -130,20 +131,9 @@ public class BatchDataConfig {
                 )
                 .fieldSetMapper(fieldSet -> {
 
-                    LocalDate fecha = null;
-
-                    String fechaTexto =
-                            fieldSet.readString("fecha");
-
-                    if (fechaTexto != null &&
-                            !fechaTexto.isBlank()) {
-
-                        try {
-                            fecha = LocalDate.parse(fechaTexto);
-                        } catch (Exception ignored) {
-                            // La validación se realizará en el Processor.
-                        }
-                    }
+                    LocalDate fecha = parseFechaFlexible(
+                            fieldSet.readString("fecha")
+                    );
 
                     BigDecimal monto = null;
 
@@ -291,20 +281,9 @@ public class BatchDataConfig {
                 )
                 .fieldSetMapper(fieldSet -> {
 
-                    LocalDate fecha = null;
-
-                    String fechaTexto =
-                            fieldSet.readString("fecha");
-
-                    if (fechaTexto != null &&
-                            !fechaTexto.isBlank()) {
-
-                        try {
-                            fecha = LocalDate.parse(fechaTexto);
-                        } catch (Exception ignored) {
-                            // La validación se realizará en el Processor.
-                        }
-                    }
+                    LocalDate fecha = parseFechaFlexible(
+                            fieldSet.readString("fecha")
+                    );
 
                     BigDecimal monto = null;
 
@@ -344,5 +323,34 @@ public class BatchDataConfig {
         return new SynchronizedItemStreamReaderBuilder<CuentaAnualInput>()
                 .delegate(cuentasAnualesReaderBase)
                 .build();
+    }
+
+    private LocalDate parseFechaFlexible(String fechaTexto) {
+
+        if (fechaTexto == null || fechaTexto.isBlank()) {
+            return null;
+        }
+
+        List<DateTimeFormatter> formatos = List.of(
+                DateTimeFormatter.ofPattern("yyyy-MM-dd"),
+                DateTimeFormatter.ofPattern("dd-MM-yyyy"),
+                DateTimeFormatter.ofPattern("dd/MM/yyyy"),
+                DateTimeFormatter.ofPattern("yyyy/MM/dd")
+        );
+
+        for (DateTimeFormatter formato : formatos) {
+
+            try {
+                return LocalDate.parse(
+                        fechaTexto.trim(),
+                        formato
+                );
+
+            } catch (DateTimeParseException ignored) {
+                // Se intenta con el siguiente formato.
+            }
+        }
+
+        return null;
     }
 }
