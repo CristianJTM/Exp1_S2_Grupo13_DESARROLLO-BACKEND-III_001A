@@ -2,6 +2,7 @@ package com.bancoxyz.batch.processor;
 
 import com.bancoxyz.batch.config.BatchDataConfig.TransaccionInput;
 import com.bancoxyz.batch.config.BatchDataConfig.TransaccionProcesada;
+import com.bancoxyz.batch.exception.DatoInvalidoException;
 
 import org.springframework.batch.infrastructure.item.ItemProcessor;
 import org.springframework.stereotype.Component;
@@ -13,7 +14,8 @@ public class TransaccionProcessor
         implements ItemProcessor<TransaccionInput, TransaccionProcesada> {
 
     @Override
-    public TransaccionProcesada process(TransaccionInput item) {
+    public TransaccionProcesada process(TransaccionInput item)
+            throws DatoInvalidoException {
 
         // ========================================================
         // INFORMACIÓN DEL HILO DE EJECUCIÓN
@@ -25,27 +27,16 @@ public class TransaccionProcessor
                         + Thread.currentThread().getName()
         );
 
-        boolean anomalia = false;
-        StringBuilder observacion = new StringBuilder();
-
         // ========================================================
         // VALIDACIÓN DE FECHA
         // ========================================================
 
-        /*
-         * La fecha es obligatoria para almacenar la transacción.
-         * Si no existe, el registro se descarta para evitar que
-         * llegue al Writer y provoque una excepción de integridad
-         * en la base de datos.
-         */
         if (item.fecha() == null) {
 
-            System.out.println(
-                    "TRANSACCIÓN " + item.id()
-                            + " -> Registro omitido: fecha inexistente."
+            throw new DatoInvalidoException(
+                    "Transacción " + item.id()
+                            + ": fecha inexistente."
             );
-
-            return null;
         }
 
         // ========================================================
@@ -54,18 +45,17 @@ public class TransaccionProcessor
 
         if (item.monto() == null) {
 
-            anomalia = true;
-
-            observacion.append(
-                    "Monto inexistente. "
+            throw new DatoInvalidoException(
+                    "Transacción " + item.id()
+                            + ": monto inexistente."
             );
+        }
 
-        } else if (item.monto().compareTo(BigDecimal.ZERO) <= 0) {
+        if (item.monto().compareTo(BigDecimal.ZERO) <= 0) {
 
-            anomalia = true;
-
-            observacion.append(
-                    "Monto inválido: debe ser mayor que cero. "
+            throw new DatoInvalidoException(
+                    "Transacción " + item.id()
+                            + ": monto inválido, debe ser mayor que cero."
             );
         }
 
@@ -77,10 +67,9 @@ public class TransaccionProcessor
                 (!"debito".equalsIgnoreCase(item.tipo()) &&
                         !"credito".equalsIgnoreCase(item.tipo()))) {
 
-            anomalia = true;
-
-            observacion.append(
-                    "Tipo de transacción inválido. "
+            throw new DatoInvalidoException(
+                    "Transacción " + item.id()
+                            + ": tipo de transacción inválido."
             );
         }
 
@@ -88,17 +77,13 @@ public class TransaccionProcessor
         // RESULTADO
         // ========================================================
 
-        String resultado = observacion.length() == 0
-                ? "Transacción válida"
-                : observacion.toString().trim();
-
         return new TransaccionProcesada(
                 item.id(),
                 item.fecha(),
                 item.monto(),
                 item.tipo(),
-                anomalia,
-                resultado
+                false,
+                "Transacción válida"
         );
     }
 }
