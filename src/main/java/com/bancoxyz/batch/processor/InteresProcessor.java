@@ -2,7 +2,7 @@ package com.bancoxyz.batch.processor;
 
 import com.bancoxyz.batch.config.BatchDataConfig.InteresInput;
 import com.bancoxyz.batch.config.BatchDataConfig.InteresProcesado;
-
+import com.bancoxyz.batch.exception.DatoInvalidoException;
 
 import org.springframework.batch.infrastructure.item.ItemProcessor;
 import org.springframework.stereotype.Component;
@@ -23,7 +23,8 @@ public class InteresProcessor
             new BigDecimal("0.04");
 
     @Override
-    public InteresProcesado process(InteresInput item) {
+    public InteresProcesado process(InteresInput item)
+            throws DatoInvalidoException {
 
         // ========================================================
         // INFORMACIÓN DEL HILO DE EJECUCIÓN
@@ -40,30 +41,52 @@ public class InteresProcessor
         // ========================================================
 
         if (item.saldo() == null) {
-            return null;
+
+            throw new DatoInvalidoException(
+                    "Cuenta " + item.cuentaId()
+                            + ": saldo inexistente."
+            );
         }
 
         if (item.saldo().compareTo(BigDecimal.ZERO) < 0) {
-            return null;
+
+            throw new DatoInvalidoException(
+                    "Cuenta " + item.cuentaId()
+                            + ": saldo inválido, no puede ser negativo."
+            );
         }
 
         // ========================================================
         // VALIDACIÓN DE EDAD
         // ========================================================
 
-        if (item.edad() == null ||
-                item.edad() < 18 ||
-                item.edad() > 100) {
+        if (item.edad() == null) {
 
-            return null;
+            throw new DatoInvalidoException(
+                    "Cuenta " + item.cuentaId()
+                            + ": edad inexistente."
+            );
+        }
+
+        if (item.edad() < 18 || item.edad() > 100) {
+
+            throw new DatoInvalidoException(
+                    "Cuenta " + item.cuentaId()
+                            + ": edad inválida, debe estar entre 18 y 100 años."
+            );
         }
 
         // ========================================================
         // VALIDACIÓN DEL TIPO DE CUENTA
         // ========================================================
 
-        if (item.tipo() == null) {
-            return null;
+        if (item.tipo() == null ||
+                item.tipo().isBlank()) {
+
+            throw new DatoInvalidoException(
+                    "Cuenta " + item.cuentaId()
+                            + ": tipo de cuenta inexistente."
+            );
         }
 
         String tipo = item.tipo()
@@ -80,9 +103,11 @@ public class InteresProcessor
 
             case "hipoteca" -> tasa = TASA_HIPOTECA;
 
-            default -> {
-                return null;
-            }
+            default -> throw new DatoInvalidoException(
+                    "Cuenta " + item.cuentaId()
+                            + ": tipo de cuenta inválido: "
+                            + item.tipo()
+            );
         }
 
         // ========================================================
@@ -97,23 +122,8 @@ public class InteresProcessor
         // CÁLCULO DEL SALDO FINAL
         // ========================================================
 
-        BigDecimal saldoFinal;
-
-        if ("ahorro".equals(tipo)) {
-
-            // Para ahorro, el interés incrementa el saldo.
-            saldoFinal = item.saldo()
-                    .add(interes);
-
-        } else {
-
-            /*
-             * Para préstamos e hipotecas se mantiene el interés
-             * como parte del saldo a pagar.
-             */
-            saldoFinal = item.saldo()
-                    .add(interes);
-        }
+        BigDecimal saldoFinal =
+                item.saldo().add(interes);
 
         // ========================================================
         // RESULTADO
