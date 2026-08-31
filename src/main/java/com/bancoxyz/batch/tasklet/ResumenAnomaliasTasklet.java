@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.LinkedHashMap;
 
 @Component
 public class ResumenAnomaliasTasklet implements Tasklet {
@@ -83,25 +83,59 @@ public class ResumenAnomaliasTasklet implements Tasklet {
         }
 
         // ========================================================
-        // CONSOLIDAR TIPOS DE ANOMALÍAS
+        // CLASIFICAR ANOMALÍAS POR TIPO
         // ========================================================
 
-        Map<String, Long> resumenAnomalias =
-                transaccionesAnomalas.stream()
-                        .collect(
-                                Collectors.groupingBy(
-                                        AnomaliaTransaccion::getDescripcion,
-                                        Collectors.counting()
-                                )
-                        );
+        Map<String, Long> resumenPorTipo =
+                new LinkedHashMap<>();
+
+        for (AnomaliaTransaccion anomalia :
+                transaccionesAnomalas) {
+
+            String descripcion =
+                    anomalia.getDescripcion();
+
+            String tipo;
+
+            if (descripcion.contains(
+                    "monto inexistente")) {
+
+                tipo = "Monto inexistente";
+
+            } else if (descripcion.contains(
+                    "monto inválido")) {
+
+                tipo = "Monto inválido";
+
+            } else if (descripcion.contains(
+                    "fecha inexistente")) {
+
+                tipo = "Fecha inexistente";
+
+            } else if (descripcion.contains(
+                    "tipo de transacción inválido")) {
+
+                tipo = "Tipo de transacción inválido";
+
+            } else {
+
+                tipo = "Otros errores";
+            }
+
+            resumenPorTipo.merge(
+                    tipo,
+                    1L,
+                    Long::sum
+            );
+        }
 
         // ========================================================
-        // GENERAR OBSERVACIÓN DEL RESUMEN
+        // GENERAR OBSERVACIÓN PARA LA BASE DE DATOS
         // ========================================================
 
         String observacion;
 
-        if (resumenAnomalias.isEmpty()) {
+        if (resumenPorTipo.isEmpty()) {
 
             observacion =
                     "Procesamiento completado sin anomalías.";
@@ -109,15 +143,18 @@ public class ResumenAnomaliasTasklet implements Tasklet {
         } else {
 
             observacion =
-                    resumenAnomalias.entrySet()
+                    resumenPorTipo.entrySet()
                             .stream()
                             .map(entry ->
                                     entry.getKey()
-                                            + " -> "
+                                            + ": "
                                             + entry.getValue()
                             )
-                            .collect(
-                                    Collectors.joining("; ")
+                            .reduce(
+                                    (a, b) -> a + "; " + b
+                            )
+                            .orElse(
+                                    "Procesamiento completado."
                             );
         }
 
@@ -171,12 +208,16 @@ public class ResumenAnomaliasTasklet implements Tasklet {
                 porcentajeAnomalias
         );
 
+        // ========================================================
+        // RESUMEN POR TIPO
+        // ========================================================
+
         System.out.println();
         System.out.println(
-                "Detalle de anomalías:"
+                "Anomalías por tipo:"
         );
 
-        if (resumenAnomalias.isEmpty()) {
+        if (resumenPorTipo.isEmpty()) {
 
             System.out.println(
                     "- No se detectaron anomalías."
@@ -184,14 +225,42 @@ public class ResumenAnomaliasTasklet implements Tasklet {
 
         } else {
 
-            resumenAnomalias.forEach(
-                    (descripcion, cantidad) -> {
+            resumenPorTipo.forEach(
+                    (tipo, cantidad) -> {
 
                         System.out.println(
                                 "- "
-                                        + descripcion
-                                        + " -> "
+                                        + tipo
+                                        + ": "
                                         + cantidad
+                        );
+                    }
+            );
+        }
+
+        // ========================================================
+        // DETALLE DE ANOMALÍAS
+        // ========================================================
+
+        System.out.println();
+        System.out.println(
+                "Detalle de anomalías:"
+        );
+
+        if (transaccionesAnomalas.isEmpty()) {
+
+            System.out.println(
+                    "- No se detectaron anomalías."
+            );
+
+        } else {
+
+            transaccionesAnomalas.forEach(
+                    anomalia -> {
+
+                        System.out.println(
+                                "- "
+                                        + anomalia.getDescripcion()
                         );
                     }
             );
