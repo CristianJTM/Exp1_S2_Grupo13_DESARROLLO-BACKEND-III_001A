@@ -129,7 +129,7 @@ public class TransaccionesJobConfig {
                  */
                 .skip(DatoInvalidoException.class)
 
-                .skipLimit(20)
+                .skipLimit(650)
 
                 .build();
     }
