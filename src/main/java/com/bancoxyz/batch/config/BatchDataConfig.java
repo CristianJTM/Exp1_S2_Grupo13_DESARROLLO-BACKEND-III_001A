@@ -14,7 +14,7 @@ import java.time.LocalDate;
 @Configuration
 public class BatchDataConfig {
 
-    private static final String DATA_PATH = "data/semana_2/";
+    private static final String DATA_PATH = "data/semana_3/";
 
 
     // ============================================================
@@ -141,8 +141,7 @@ public class BatchDataConfig {
                         try {
                             fecha = LocalDate.parse(fechaTexto);
                         } catch (Exception ignored) {
-                            // La fecha inválida queda como null
-                            // para ser manejada posteriormente.
+                            // La validación se realizará en el Processor.
                         }
                     }
 
@@ -157,7 +156,7 @@ public class BatchDataConfig {
                         try {
                             monto = new BigDecimal(montoTexto);
                         } catch (Exception ignored) {
-                            // El monto inválido queda como null.
+                            // La validación se realizará en el Processor.
                         }
                     }
 
@@ -173,7 +172,7 @@ public class BatchDataConfig {
 
 
     // ============================================================
-    // READER SEGURO: TRANSACCIONES
+    // READER SINCRONIZADO: TRANSACCIONES
     // ============================================================
 
     @Bean
@@ -222,7 +221,7 @@ public class BatchDataConfig {
                         try {
                             saldo = new BigDecimal(saldoTexto);
                         } catch (Exception ignored) {
-                            // El saldo inválido queda como null.
+                            // La validación se realizará en el Processor.
                         }
                     }
 
@@ -237,7 +236,7 @@ public class BatchDataConfig {
                         try {
                             edad = Integer.valueOf(edadTexto);
                         } catch (Exception ignored) {
-                            // La edad inválida queda como null.
+                            // La validación se realizará en el Processor.
                         }
                     }
 
@@ -254,7 +253,7 @@ public class BatchDataConfig {
 
 
     // ============================================================
-    // READER SEGURO: INTERESES
+    // READER SINCRONIZADO: INTERESES
     // ============================================================
 
     @Bean
@@ -303,7 +302,7 @@ public class BatchDataConfig {
                         try {
                             fecha = LocalDate.parse(fechaTexto);
                         } catch (Exception ignored) {
-                            // La fecha inválida queda como null.
+                            // La validación se realizará en el Processor.
                         }
                     }
 
@@ -318,7 +317,7 @@ public class BatchDataConfig {
                         try {
                             monto = new BigDecimal(montoTexto);
                         } catch (Exception ignored) {
-                            // El monto inválido queda como null.
+                            // La validación se realizará en el Processor.
                         }
                     }
 
@@ -335,7 +334,7 @@ public class BatchDataConfig {
 
 
     // ============================================================
-    // READER SEGURO: CUENTAS ANUALES
+    // READER SINCRONIZADO: CUENTAS ANUALES
     // ============================================================
 
     @Bean
