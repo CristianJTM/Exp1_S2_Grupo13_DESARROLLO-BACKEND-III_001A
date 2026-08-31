@@ -2,7 +2,9 @@ package com.bancoxyz.batch.config;
 
 import com.bancoxyz.batch.config.BatchDataConfig.TransaccionInput;
 import com.bancoxyz.batch.config.BatchDataConfig.TransaccionProcesada;
+import com.bancoxyz.batch.exception.DatoInvalidoException;
 import com.bancoxyz.batch.listener.BatchJobListener;
+import com.bancoxyz.batch.listener.TransaccionSkipListener;
 import com.bancoxyz.batch.processor.TransaccionProcessor;
 import com.bancoxyz.batch.tasklet.ResumenAnomaliasTasklet;
 import com.bancoxyz.batch.writer.TransaccionWriter;
@@ -32,6 +34,7 @@ public class TransaccionesJobConfig {
     private final BatchJobListener batchJobListener;
     private final ResumenAnomaliasTasklet resumenAnomaliasTasklet;
     private final ThreadPoolTaskExecutor batchTaskExecutor;
+    private final TransaccionSkipListener transaccionSkipListener;
 
     public TransaccionesJobConfig(
             JobRepository jobRepository,
@@ -41,6 +44,7 @@ public class TransaccionesJobConfig {
             TransaccionWriter transaccionWriter,
             BatchJobListener batchJobListener,
             ResumenAnomaliasTasklet resumenAnomaliasTasklet,
+            TransaccionSkipListener transaccionSkipListener,
             ThreadPoolTaskExecutor batchTaskExecutor) {
 
         this.jobRepository = jobRepository;
@@ -51,6 +55,7 @@ public class TransaccionesJobConfig {
         this.batchJobListener = batchJobListener;
         this.resumenAnomaliasTasklet = resumenAnomaliasTasklet;
         this.batchTaskExecutor = batchTaskExecutor;
+        this.transaccionSkipListener = transaccionSkipListener;
     }
 
     @Bean
@@ -85,29 +90,45 @@ public class TransaccionesJobConfig {
                 // Reader protegido para procesamiento concurrente
                 .reader(transaccionesReader)
 
-                // Validación y transformación de datos
+                // Validación y transformación
                 .processor(transaccionProcessor)
 
-                // Persistencia de resultados
+                // Persistencia
                 .writer(transaccionWriter)
 
                 // Procesamiento paralelo con 3 hilos
                 .taskExecutor(batchTaskExecutor)
 
                 .faultTolerant()
+                .listener(transaccionSkipListener)
+                // ====================================================
+                // RETRY
+                // ====================================================
 
                 /*
-                 * Los errores de acceso a datos pueden ser transitorios,
-                 * por lo que se permite realizar hasta 3 reintentos.
+                 * Los errores de acceso a datos pueden ser
+                 * transitorios, por lo que se permiten
+                 * hasta 3 reintentos.
                  */
                 .retry(DataAccessException.class)
                 .retryLimit(3)
+
+                // ====================================================
+                // SKIP
+                // ====================================================
+
                 /*
-                 * Los errores de formato o estructura del CSV se
-                 * consideran registros que pueden omitirse para
-                 * permitir la continuidad del procesamiento.
+                 * Los errores de formato del archivo se pueden
+                 * omitir para continuar con los demás registros.
                  */
                 .skip(FlatFileParseException.class)
+
+                /*
+                 * Los datos que no cumplen las reglas de negocio
+                 * se consideran inválidos y son omitidos.
+                 */
+                .skip(DatoInvalidoException.class)
+
                 .skipLimit(20)
 
                 .build();
