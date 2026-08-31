@@ -13,9 +13,9 @@ public class BatchTaskExecutorConfig {
         ThreadPoolTaskExecutor executor =
                 new ThreadPoolTaskExecutor();
 
-        // Máximo de 3 hilos de ejecución
-        executor.setCorePoolSize(3);
-        executor.setMaxPoolSize(3);
+        // Máximo de 4 hilos de ejecución
+        executor.setCorePoolSize(4);
+        executor.setMaxPoolSize(4);
 
         // Tareas pendientes
         executor.setQueueCapacity(10);
