@@ -2,6 +2,7 @@ package com.bancoxyz.batch.model;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -14,6 +15,9 @@ public class AnomaliaTransaccion {
 
     @Column(name = "transaccion_id")
     private Long transaccionId;
+
+    @Column(name = "fecha_transaccion")
+    private LocalDate fechaTransaccion;
 
     @Column(nullable = false)
     private String tipo;
@@ -29,11 +33,13 @@ public class AnomaliaTransaccion {
 
     public AnomaliaTransaccion(
             Long transaccionId,
+            LocalDate fechaTransaccion,
             String tipo,
             String descripcion,
             LocalDateTime fechaRegistro) {
 
         this.transaccionId = transaccionId;
+        this.fechaTransaccion = fechaTransaccion;
         this.tipo = tipo;
         this.descripcion = descripcion;
         this.fechaRegistro = fechaRegistro;
@@ -45,6 +51,10 @@ public class AnomaliaTransaccion {
 
     public Long getTransaccionId() {
         return transaccionId;
+    }
+
+    public LocalDate getFechaTransaccion() {
+        return fechaTransaccion;
     }
 
     public String getTipo() {
@@ -65,6 +75,10 @@ public class AnomaliaTransaccion {
 
     public void setTransaccionId(Long transaccionId) {
         this.transaccionId = transaccionId;
+    }
+
+    public void setFechaTransaccion(LocalDate fechaTransaccion) {
+        this.fechaTransaccion = fechaTransaccion;
     }
 
     public void setTipo(String tipo) {
