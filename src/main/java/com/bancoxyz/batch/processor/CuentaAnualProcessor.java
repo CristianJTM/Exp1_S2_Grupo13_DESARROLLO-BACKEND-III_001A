@@ -2,7 +2,7 @@ package com.bancoxyz.batch.processor;
 
 import com.bancoxyz.batch.config.BatchDataConfig.CuentaAnualInput;
 import com.bancoxyz.batch.config.BatchDataConfig.CuentaAnualProcesada;
-
+import com.bancoxyz.batch.exception.DatoInvalidoException;
 
 import org.springframework.batch.infrastructure.item.ItemProcessor;
 import org.springframework.stereotype.Component;
@@ -15,7 +15,8 @@ public class CuentaAnualProcessor
 
     @Override
     public CuentaAnualProcesada process(
-            CuentaAnualInput item) {
+            CuentaAnualInput item)
+            throws DatoInvalidoException {
 
         // ========================================================
         // INFORMACIÓN DEL HILO DE EJECUCIÓN
@@ -32,7 +33,10 @@ public class CuentaAnualProcessor
         // ========================================================
 
         if (item.cuentaId() == null) {
-            return null;
+
+            throw new DatoInvalidoException(
+                    "Cuenta anual: identificador de cuenta inexistente."
+            );
         }
 
         // ========================================================
@@ -40,7 +44,11 @@ public class CuentaAnualProcessor
         // ========================================================
 
         if (item.fecha() == null) {
-            return null;
+
+            throw new DatoInvalidoException(
+                    "Cuenta " + item.cuentaId()
+                            + ": fecha inexistente."
+            );
         }
 
         // ========================================================
@@ -48,11 +56,19 @@ public class CuentaAnualProcessor
         // ========================================================
 
         if (item.monto() == null) {
-            return null;
+
+            throw new DatoInvalidoException(
+                    "Cuenta " + item.cuentaId()
+                            + ": monto inexistente."
+            );
         }
 
         if (item.monto().compareTo(BigDecimal.ZERO) == 0) {
-            return null;
+
+            throw new DatoInvalidoException(
+                    "Cuenta " + item.cuentaId()
+                            + ": monto inválido, no puede ser cero."
+            );
         }
 
         // ========================================================
@@ -62,15 +78,23 @@ public class CuentaAnualProcessor
         if (item.descripcion() == null ||
                 item.descripcion().isBlank()) {
 
-            return null;
+            throw new DatoInvalidoException(
+                    "Cuenta " + item.cuentaId()
+                            + ": descripción inexistente."
+            );
         }
 
         // ========================================================
         // VALIDACIÓN DEL TIPO DE TRANSACCIÓN
         // ========================================================
 
-        if (item.transaccion() == null) {
-            return null;
+        if (item.transaccion() == null ||
+                item.transaccion().isBlank()) {
+
+            throw new DatoInvalidoException(
+                    "Cuenta " + item.cuentaId()
+                            + ": tipo de transacción inexistente."
+            );
         }
 
         String tipo = item.transaccion()
@@ -81,7 +105,11 @@ public class CuentaAnualProcessor
                 !"retiro".equals(tipo) &&
                 !"compra".equals(tipo)) {
 
-            return null;
+            throw new DatoInvalidoException(
+                    "Cuenta " + item.cuentaId()
+                            + ": tipo de transacción inválido: "
+                            + item.transaccion()
+            );
         }
 
         // ========================================================
@@ -97,18 +125,28 @@ public class CuentaAnualProcessor
 
         if ("deposito".equals(tipo)) {
 
-            if (item.monto().compareTo(BigDecimal.ZERO) > 0) {
+            if (item.monto().compareTo(BigDecimal.ZERO) <= 0) {
 
-                totalDepositos = item.monto();
+                throw new DatoInvalidoException(
+                        "Cuenta " + item.cuentaId()
+                                + ": un depósito debe tener monto positivo."
+                );
             }
+
+            totalDepositos = item.monto();
 
         } else if ("retiro".equals(tipo) ||
                 "compra".equals(tipo)) {
 
-            if (item.monto().compareTo(BigDecimal.ZERO) < 0) {
+            if (item.monto().compareTo(BigDecimal.ZERO) >= 0) {
 
-                totalRetiros = item.monto().abs();
+                throw new DatoInvalidoException(
+                        "Cuenta " + item.cuentaId()
+                                + ": un retiro o compra debe tener monto negativo."
+                );
             }
+
+            totalRetiros = item.monto().abs();
         }
 
         // ========================================================
