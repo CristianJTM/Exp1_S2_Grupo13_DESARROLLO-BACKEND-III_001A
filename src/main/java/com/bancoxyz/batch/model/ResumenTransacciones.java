@@ -15,7 +15,7 @@ public class ResumenTransacciones {
     @Column(name = "fecha", nullable = false)
     private LocalDate fecha;
 
-    @Column(name = "observacion", length = 500)
+    @Column(name = "observacion", columnDefinition = "TEXT")
     private String observacion;
 
     @Column(name = "total_transacciones", nullable = false)
