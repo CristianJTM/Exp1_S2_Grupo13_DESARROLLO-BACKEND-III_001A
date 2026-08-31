@@ -27,8 +27,16 @@ public class ResumenTransaccionesProcessor
     public ResumenTransacciones process(
             LocalDate fecha) {
 
+        // ========================================================
+        // OBTENER TRANSACCIONES DE LA FECHA
+        // ========================================================
+
         List<Transaccion> transacciones =
                 transaccionRepository.findByFecha(fecha);
+
+        // ========================================================
+        // CONTADORES
+        // ========================================================
 
         int total =
                 transacciones.size();
@@ -40,6 +48,10 @@ public class ResumenTransaccionesProcessor
 
         int validas =
                 total - anomalas;
+
+        // ========================================================
+        // GENERAR OBSERVACIÓN
+        // ========================================================
 
         String observacion;
 
@@ -56,12 +68,16 @@ public class ResumenTransaccionesProcessor
                     "No se detectaron anomalías.";
         }
 
+        // ========================================================
+        // RESULTADO
+        // ========================================================
+
         return new ResumenTransacciones(
                 fecha,
                 observacion,
-                validas,
+                total,
                 anomalas,
-                total
+                validas
         );
     }
 }
