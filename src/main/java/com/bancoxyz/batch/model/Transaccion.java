@@ -22,8 +22,6 @@ public class Transaccion {
     @Column(name = "tipo", length = 20)
     private String tipo;
 
-    @Column(name = "anomalia", nullable = false)
-    private boolean anomalia;
 
     @Column(name = "observacion", length = 500)
     private String observacion;
@@ -36,14 +34,12 @@ public class Transaccion {
             LocalDate fecha,
             BigDecimal monto,
             String tipo,
-            boolean anomalia,
             String observacion) {
 
         this.id = id;
         this.fecha = fecha;
         this.monto = monto;
         this.tipo = tipo;
-        this.anomalia = anomalia;
         this.observacion = observacion;
     }
 
@@ -77,14 +73,6 @@ public class Transaccion {
 
     public void setTipo(String tipo) {
         this.tipo = tipo;
-    }
-
-    public boolean isAnomalia() {
-        return anomalia;
-    }
-
-    public void setAnomalia(boolean anomalia) {
-        this.anomalia = anomalia;
     }
 
     public String getObservacion() {
