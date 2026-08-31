@@ -40,6 +40,7 @@ public class TransaccionSkipListener
             AnomaliaTransaccion anomalia =
                     new AnomaliaTransaccion(
                             null,
+                            null,
                             "ERROR_LECTURA",
                             "Error de formato en archivo CSV: "
                                     + throwable.getMessage(),
@@ -74,6 +75,7 @@ public class TransaccionSkipListener
         AnomaliaTransaccion anomalia =
                 new AnomaliaTransaccion(
                         item.id(),
+                        item.fecha(),
                         "DATO_INVALIDO",
                         descripcion,
                         LocalDateTime.now()
@@ -106,6 +108,7 @@ public class TransaccionSkipListener
         AnomaliaTransaccion anomalia =
                 new AnomaliaTransaccion(
                         item.id(),
+                        item.fecha(),
                         "ERROR_ESCRITURA",
                         descripcion,
                         LocalDateTime.now()

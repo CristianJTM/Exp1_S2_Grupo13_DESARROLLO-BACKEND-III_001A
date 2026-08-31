@@ -40,6 +40,7 @@ public class CuentaAnualSkipListener
             AnomaliaTransaccion anomalia =
                     new AnomaliaTransaccion(
                             null,
+                            null,
                             "ERROR_LECTURA_CUENTA_ANUAL",
                             "Error de formato en archivo CSV de cuentas anuales: "
                                     + throwable.getMessage(),
@@ -74,6 +75,7 @@ public class CuentaAnualSkipListener
         AnomaliaTransaccion anomalia =
                 new AnomaliaTransaccion(
                         item.cuentaId(),
+                        item.fecha(),
                         "DATO_INVALIDO_CUENTA_ANUAL",
                         descripcion,
                         LocalDateTime.now()
@@ -106,6 +108,7 @@ public class CuentaAnualSkipListener
         AnomaliaTransaccion anomalia =
                 new AnomaliaTransaccion(
                         item.cuentaId(),
+                        null,
                         "ERROR_ESCRITURA_CUENTA_ANUAL",
                         descripcion,
                         LocalDateTime.now()

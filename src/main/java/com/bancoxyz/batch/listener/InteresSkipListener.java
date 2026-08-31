@@ -40,6 +40,7 @@ public class InteresSkipListener
             AnomaliaTransaccion anomalia =
                     new AnomaliaTransaccion(
                             null,
+                            null,
                             "ERROR_LECTURA_INTERESES",
                             "Error de formato en archivo CSV de intereses: "
                                     + throwable.getMessage(),
@@ -74,6 +75,7 @@ public class InteresSkipListener
         AnomaliaTransaccion anomalia =
                 new AnomaliaTransaccion(
                         item.cuentaId(),
+                        null,
                         "DATO_INVALIDO_INTERES",
                         descripcion,
                         LocalDateTime.now()
@@ -106,6 +108,7 @@ public class InteresSkipListener
         AnomaliaTransaccion anomalia =
                 new AnomaliaTransaccion(
                         item.cuentaId(),
+                        null,
                         "ERROR_ESCRITURA_INTERES",
                         descripcion,
                         LocalDateTime.now()

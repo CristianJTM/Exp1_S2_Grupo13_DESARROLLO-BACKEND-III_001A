@@ -105,20 +105,6 @@ public class BatchJobListener implements JobExecutionListener {
         System.out.println("==================================================");
         System.out.println();
 
-        // ========================================================
-        // CIERRE AUTOMÁTICO DE LA APLICACIÓN
-        // ========================================================
 
-        if (jobExecution.getStatus().isRunning() == false) {
-
-            int exitCode = SpringApplication.exit(
-                    applicationContext,
-                    () -> jobExecution.getStatus().isUnsuccessful()
-                            ? 1
-                            : 0
-            );
-
-            System.exit(exitCode);
-        }
     }
 }
