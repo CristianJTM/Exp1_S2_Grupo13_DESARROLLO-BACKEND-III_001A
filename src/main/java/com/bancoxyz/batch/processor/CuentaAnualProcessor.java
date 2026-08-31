@@ -8,6 +8,7 @@ import org.springframework.batch.infrastructure.item.ItemProcessor;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.text.Normalizer;
 
 @Component
 public class CuentaAnualProcessor
@@ -18,15 +19,6 @@ public class CuentaAnualProcessor
             CuentaAnualInput item)
             throws DatoInvalidoException {
 
-        // ========================================================
-        // INFORMACIÓN DEL HILO DE EJECUCIÓN
-        // ========================================================
-
-        System.out.println(
-                "CUENTA ANUAL " + item.cuentaId()
-                        + " -> Hilo: "
-                        + Thread.currentThread().getName()
-        );
 
         // ========================================================
         // VALIDACIÓN DE CUENTA
@@ -97,9 +89,22 @@ public class CuentaAnualProcessor
             );
         }
 
-        String tipo = item.transaccion()
-                .trim()
-                .toLowerCase();
+        // ========================================================
+        // NORMALIZACIÓN DEL TIPO
+        // ========================================================
+
+        String tipo = Normalizer
+                .normalize(
+                        item.transaccion(),
+                        Normalizer.Form.NFD
+                )
+                .replaceAll("\\p{M}", "")
+                .toLowerCase()
+                .trim();
+
+        // ========================================================
+        // VALIDACIÓN DEL TIPO
+        // ========================================================
 
         if (!"deposito".equals(tipo) &&
                 !"retiro".equals(tipo) &&
@@ -118,45 +123,42 @@ public class CuentaAnualProcessor
 
         BigDecimal totalDepositos = BigDecimal.ZERO;
         BigDecimal totalRetiros = BigDecimal.ZERO;
+        BigDecimal saldoMovimiento;
 
         // ========================================================
-        // CLASIFICACIÓN DEL MOVIMIENTO
+        // CLASIFICACIÓN Y NORMALIZACIÓN DEL MOVIMIENTO
         // ========================================================
 
         if ("deposito".equals(tipo)) {
 
-            if (item.monto().compareTo(BigDecimal.ZERO) <= 0) {
+            // ----------------------------------------------------
+            // DEPÓSITO
+            // ----------------------------------------------------
+            // Todo depósito representa un ingreso.
+            // Se normaliza el monto a positivo aunque el archivo
+            // legacy lo entregue con signo negativo.
 
-                throw new DatoInvalidoException(
-                        "Cuenta " + item.cuentaId()
-                                + ": un depósito debe tener monto positivo."
-                );
-            }
+            totalDepositos = item.monto().abs();
 
-            totalDepositos = item.monto();
+            saldoMovimiento = totalDepositos;
 
-        } else if ("retiro".equals(tipo) ||
-                "compra".equals(tipo)) {
+        } else {
 
-            if (item.monto().compareTo(BigDecimal.ZERO) >= 0) {
-
-                throw new DatoInvalidoException(
-                        "Cuenta " + item.cuentaId()
-                                + ": un retiro o compra debe tener monto negativo."
-                );
-            }
+            // ----------------------------------------------------
+            // RETIRO / COMPRA
+            // ----------------------------------------------------
+            // Todo retiro o compra representa un egreso.
+            // Se normaliza el monto a negativo para representar
+            // correctamente su efecto sobre el saldo.
 
             totalRetiros = item.monto().abs();
+
+            saldoMovimiento =
+                    totalRetiros.negate();
         }
 
         // ========================================================
-        // SALDO DEL MOVIMIENTO
-        // ========================================================
-
-        BigDecimal saldoMovimiento = item.monto();
-
-        // ========================================================
-        // RESULTADO
+        // RESULTADO PROCESADO
         // ========================================================
 
         return new CuentaAnualProcesada(

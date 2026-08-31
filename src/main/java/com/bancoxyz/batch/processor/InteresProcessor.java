@@ -27,16 +27,6 @@ public class InteresProcessor
             throws DatoInvalidoException {
 
         // ========================================================
-        // INFORMACIÓN DEL HILO DE EJECUCIÓN
-        // ========================================================
-
-        System.out.println(
-                "CUENTA " + item.cuentaId()
-                        + " -> Hilo: "
-                        + Thread.currentThread().getName()
-        );
-
-        // ========================================================
         // VALIDACIÓN DEL SALDO
         // ========================================================
 

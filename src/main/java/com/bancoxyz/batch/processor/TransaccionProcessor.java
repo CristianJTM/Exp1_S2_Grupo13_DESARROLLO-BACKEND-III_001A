@@ -18,16 +18,6 @@ public class TransaccionProcessor
             throws DatoInvalidoException {
 
         // ========================================================
-        // INFORMACIÓN DEL HILO DE EJECUCIÓN
-        // ========================================================
-
-        System.out.println(
-                "TRANSACCIÓN " + item.id()
-                        + " -> Hilo: "
-                        + Thread.currentThread().getName()
-        );
-
-        // ========================================================
         // VALIDACIÓN DE FECHA
         // ========================================================
 
@@ -69,7 +59,8 @@ public class TransaccionProcessor
 
             throw new DatoInvalidoException(
                     "Transacción " + item.id()
-                            + ": tipo de transacción inválido."
+                            + ": tipo de transacción inválido: "
+                            + item.tipo()
             );
         }
 
@@ -82,7 +73,6 @@ public class TransaccionProcessor
                 item.fecha(),
                 item.monto(),
                 item.tipo(),
-                false,
                 "Transacción válida"
         );
     }
