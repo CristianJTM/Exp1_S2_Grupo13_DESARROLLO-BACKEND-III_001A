@@ -16,7 +16,6 @@ public interface TransaccionRepository
 
     List<Transaccion> findByTipo(String tipo);
 
-    List<Transaccion> findByAnomaliaTrue();
 
     List<Transaccion> findByFechaBetween(
             LocalDate fechaInicio,
